@@ -16,6 +16,8 @@ const fadeIn = keyframes`
   }
 `;
 
+// Lado Esquerdo com formulário de registro
+
 export const Container = styled.div<Props>`
     display: flex;
     height: 100vh;
@@ -117,6 +119,9 @@ export const Botao = styled.button`
   }
 `
 
+/*-------------------------------------------------*/
+
+// Lado Direito com imagem de fundo e animação
 export const LadoDireito = styled.div<Props>`
   flex: 1;
   z-index: 10;

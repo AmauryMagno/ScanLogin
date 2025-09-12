@@ -42,7 +42,9 @@ export const MensagemContainer = styled.div<MensagemContainerProps>`
     z-index: 1000;
     font-size: 16px;
     font-weight: bold;
-    background-color: ${({ tipo }) => (tipo === 'erro' ? '#FF6C2F' : '#FFA515 ')};
+    background-color: ${({ tipo }) => (
+        (tipo === 'erro') ? '#FF6C2F' : (tipo === 'aviso') ? '#FFA515' : '#4BB543'
+    )};
 
     &.enter{
         animation: ${slideDown} 0.5s ease-in-out;

@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { AnimatedText } from "../../components/animated/animated-text/text";
 import { Mensagens } from "../../components/messages/message";
 import * as faceapi from "face-api.js";
-import { loadModels } from "../../utils/faceAPI";
 import { Camera } from "../../components/camera/camera";
 
 export const Login = (): JSX.Element => {
@@ -17,62 +16,23 @@ export const Login = (): JSX.Element => {
     const [isAnimatingExit, setIsAnimatingExit] = useState(false);
     const [isAnimatingLoad, setIsAnimatingLoad] = useState(false);
 
-    //Configuracoes para acessar e usar Camera
-    const videoReference = useRef<HTMLVideoElement>(null);
-    const canvarReference = useRef<HTMLCanvasElement>(null);
-    const [ready, setReady] = useState(false);
+    // Estado para utilizacao das Mensagens
+    const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "aviso" | "erro"; mensagem: string } | null>(null);
 
-    const [message, setMessage] = useState('');
+    // Navegação entre paginas
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const init = async () => {
-            await loadModels();
+    // Função para comparar embedding do rosto com os embeddings salvos no cache
+    const handleEmbeddigs = async (detections: any) => {
+        // Verifica se o vetor existe em caching
+        const embeddingsExistentes = JSON.parse(localStorage.getItem('embeddings') || '[]');
 
-            // Inicia câmera
-            if (videoReference.current) {
-                navigator.mediaDevices
-                    .getUserMedia({ video: true })
-                    .then((stream) => {
-                        videoReference.current!.srcObject = stream;
-                    });
-            }
-            setReady(true);
-        };
-        init();
-    }, []);
+        const rostoReconhecido = compararEmbeddings(detections.descriptor, embeddingsExistentes);
 
-    // Função para capturar o rosto e extrair o vetor (embedding)
-    const handleScan = async () => {
-        if (videoReference.current && canvarReference.current) {
-
-            //Detecta o rosto e as landmarks
-            const detections = await faceapi
-                .detectSingleFace(videoReference.current)
-                .withFaceLandmarks()
-                .withFaceDescriptor();
-
-            //Limpa o canvas antes de desenhar
-            const canvas = canvarReference.current.getContext('2d');
-            canvas?.clearRect(0, 0, canvarReference.current.width, canvarReference.current.height);
-
-            if (detections) {
-                console.log("Descricao do valores do rosto (embedding):", detections.descriptor);
-                alert("Rosto com os (embedding) detectado e salvo no console.");
-                faceapi.draw.drawDetections(canvarReference.current, faceapi.resizeResults(detections, { width: 640, height: 480 }));
-                // Verifica se o vetor existe em caching
-                const embeddingsExistentes = JSON.parse(localStorage.getItem('embeddings') || '[]');
-                const rostoReconhecido = compararEmbeddings(detections.descriptor, embeddingsExistentes);
-
-                if (rostoReconhecido) {
-                    alert("Rosto reconhecido! Login efetuado com sucesso.");
-                } else {
-                    alert("Rosto não reconhecido. Tente novamente ou registre-se.");
-                }
-
-            } else {
-                alert("Nenhum rosto foi encontrado.");
-            }
+        if (rostoReconhecido) {
+            setMensagem({ tipo: "sucesso", mensagem: "Rosto reconhecido, seja bem vindo!" });
+        } else {
+            setMensagem({ tipo: "aviso", mensagem: "Rosto não reconhecido" });
         }
     };
 
@@ -88,6 +48,7 @@ export const Login = (): JSX.Element => {
         return false; // Rosto não reconhecido
     }
 
+    // Animação de entrada
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsAnimatingLoad(true);
@@ -95,6 +56,7 @@ export const Login = (): JSX.Element => {
         return () => clearTimeout(timer)
     }, []);
 
+    // Navegar para pagina de cadastro
     const navigateToCadastro = () => {
         setIsAnimatingExit(true);
 
@@ -105,14 +67,15 @@ export const Login = (): JSX.Element => {
 
     return (
         <Container>
-            {message && <Mensagens tipo="erro" mensagem={message} />}
+            {mensagem && (
+                <Mensagens mensagem={mensagem?.mensagem} tipo={mensagem?.tipo} />)}
             <LadoEsquerdo>
                 <AreaInput>
                     <AreaTitulo>
                         <Titulo>Login</Titulo>
                         <Texto> por favor centralize seu rosto para efetuar Login</Texto>
                     </AreaTitulo>
-                    <Camera canvasRef={canvarReference} videoRef={videoReference} ready={ready} handleScan={handleScan} />
+                    <Camera onScan={handleEmbeddigs} infoMessage={setMensagem} />
                     <AreaInterrogativa>
                         <Texto>
                             Não tenho uma conta!

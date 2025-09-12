@@ -7,19 +7,16 @@ import {
 import { AnimatedText } from "../../components/animated/animated-text/text"
 import { useNavigate } from "react-router-dom";
 import { Camera } from "../../components/camera/camera";
-import * as faceapi from "face-api.js";
-import { loadModels } from "../../utils/faceAPI";
+import { Mensagens } from "../../components/messages/message";
 
 export const Register = (): JSX.Element => {
+    // Estados para controlar as animações de entrada e saída
     const [isAnimatingExit, setIsAnimatingExit] = useState(false);
     const [isAnimatingLoad, setIsAnimatingLoad] = useState(false);
     const navigate = useNavigate();
 
-    //Configuracoes para acessar e usar Camera
-    const videoReference = useRef<HTMLVideoElement>(null);
-    const canvarReference = useRef<HTMLCanvasElement>(null);
-    const [ready, setReady] = useState(false);
-
+    // Estado para utilizacao das Mensagens
+    const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "aviso" | "erro"; mensagem: string } | null>(null);
 
     // Animação de entrada
     useEffect(() => {
@@ -29,29 +26,10 @@ export const Register = (): JSX.Element => {
         return () => clearTimeout(timer)
     }, []);
 
-    //Inicia os modelos e a camera
-    useEffect(() => {
-        const init = async () => {
-            await loadModels();
-
-            // Inicia câmera
-            if (videoReference.current) {
-                navigator.mediaDevices
-                    .getUserMedia({ video: true })
-                    .then((stream) => {
-                        videoReference.current!.srcObject = stream;
-                    });
-            }
-            setReady(true);
-        };
-        init();
-    }, []);
-
 
     // Função para navegar para a página de login com animação de saída
     const navigateToLogin = () => {
         setIsAnimatingExit(true);
-
         setTimeout(() => {
             navigate('/login')
         }, 750);
@@ -64,36 +42,19 @@ export const Register = (): JSX.Element => {
         localStorage.setItem('embeddings', JSON.stringify(embeddings));
     }
 
-    // Função para capturar o rosto e extrair o vetor (embedding)
-    const handleScan = async () => {
-        if (videoReference.current && canvarReference.current) {
-
-            //Detecta o rosto e as landmarks
-            const detections = await faceapi
-                .detectSingleFace(videoReference.current)
-                .withFaceLandmarks()
-                .withFaceDescriptor();
-
-            //Limpa o canvas antes de desenhar
-            const canvas = canvarReference.current.getContext('2d');
-            canvas?.clearRect(0, 0, canvarReference.current.width, canvarReference.current.height);
-
-            if (detections) {
-                console.log("Descricao do valores do rosto (embedding):", detections.descriptor);
-                alert("Rosto com os (embedding) detectado e salvo no console.");
-                faceapi.draw.drawDetections(canvarReference.current, faceapi.resizeResults(detections, { width: 640, height: 480 }));
-
-                // Salvar o vetor em caching
-                salvarEmbeddingNoCache(detections.descriptor);
-
-            } else {
-                alert("Nenhum rosto foi encontrado.");
-            }
+    // Função para Salvar o vetor (embedding) do rosto capturado
+    const saveFace = async (detections: any) => {
+        if (detections) {
+            // Salvar o vetor em caching
+            salvarEmbeddingNoCache(detections.descriptor);
+            setMensagem({ tipo: "sucesso", mensagem: "Rosto registrado com sucesso!" });
         }
     };
 
     return (
         <Container>
+            {mensagem && (
+                <Mensagens mensagem={mensagem?.mensagem} tipo={mensagem?.tipo} />)}
             <LadoDireito isAnimating={isAnimatingExit}>
                 <Apresentacao>
                     <AreaTexto>
@@ -111,7 +72,7 @@ export const Register = (): JSX.Element => {
                     <AreaTitulo>
                         <Titulo>Criar Conta</Titulo>
                     </AreaTitulo>
-                    <Camera canvasRef={canvarReference} videoRef={videoReference} ready={ready} handleScan={handleScan} />
+                    <Camera onScan={saveFace} infoMessage={setMensagem} />
                     <AreaInterrogativa>
                         <Texto>
                             Já tenho uma conta?

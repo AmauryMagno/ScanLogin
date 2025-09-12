@@ -2,7 +2,7 @@ import { JSX, useState, useEffect } from 'react';
 import { MensagemContainer, MensagemTexto } from './message_css';
 
 interface MensagensProps {
-    tipo: 'erro' | 'aviso';
+    tipo: 'erro' | 'aviso' | 'sucesso';
     mensagem: string;
     onClose?: () => void;
 }
