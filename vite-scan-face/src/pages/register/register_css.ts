@@ -2,8 +2,8 @@ import styled, { css, keyframes } from 'styled-components'
 import bkg_image from '../../assets/img-bkg-login.webp'
 
 interface Props {
-    isAnimating?: boolean;
-    checkedPerfil?: boolean;
+  isAnimating?: boolean;
+  checkedPerfil?: boolean;
 }
 
 const fadeIn = keyframes`
@@ -36,8 +36,8 @@ export const LadoDireito = styled.div<Props>`
   overflow: hidden;
   transition: transform 0.7s ease-in-out;
   ${({ isAnimating }) =>
-        isAnimating &&
-        css`
+    isAnimating &&
+    css`
         transform: translateX(100%);
       `}
   
@@ -83,7 +83,7 @@ export const LadoEsquerdo = styled.div`
 `
 export const AreaInput = styled.div`
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: center;
   flex-direction: column;
   width: 80%;
